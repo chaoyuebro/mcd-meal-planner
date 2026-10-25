@@ -80,6 +80,8 @@ python scripts/plan.py plan --store 3560134 --mode normal --text "两个人，�
 
 `--skip` 接受逗号分隔的商品编码，多套用分号分隔（`"A,B;A,C"`）。不要修改用户条件来制造「新方案」。
 
+候选看尽时引擎会返回 `blocker: exhausted`（「符合条件的 N 组搭配都已经看过了」）——这不是条件无解，转述时说明看完了，让用户决定是改条件还是重新生成。
+
 ### 4. 转述结果
 
 使用下面的模板，禁止改写数字：
@@ -122,7 +124,7 @@ python scripts/plan.py plan --store 3560134 --mode normal --text "两个人，�
 | `plans[].items[]` | 商品明细，`sauceOff` 表示减脂模式已去酱 |
 | `plans[].hasEstimate` | 含兜底估算热量 |
 | `plans[].signature` | 换一套时回传用 |
-| `blocker` | 无方案时的阻碍说明与建议（V1.20 起只剩预算与搭配两类） |
+| `blocker` | 无方案时的阻碍说明与建议。V1.20 起只剩两类：`no-match`（预算/搭配无解）与 `exhausted`（换一套把候选看尽，不是无解） |
 | `recognized` | 引擎实际识别到的条件（转述时逐条列出） |
 | `unresolved` | 没识别或门店没有的内容；热量/营养素「未生效」提示也在这里 |
 
@@ -136,6 +138,7 @@ python scripts/plan.py plan --store 3560134 --mode normal --text "两个人，�
 | `hasToken: false` | 服务起了但没给 token，提示重新带 `MCD_TOKEN` 启动 |
 | `缺少 storeCode` | 先走 `stores` 子命令选门店 |
 | `blocker: no-match` | 照抄阻碍原因与建议，等用户决定是否放宽 |
+| `blocker: exhausted` | 「换一套」把符合条件的搭配都看过了，不是无解；让用户改条件或重新生成 |
 | `note` 里有「未生效」 | 热量/营养素不再参与配餐，照实说明即可，不要自行补条件 |
 | `note` 里有「试算失败」 | 如实告知这组没算出来，其余方案仍有效 |
 | 咖啡/饮品缺失 | 减脂模式只允许黑咖啡；门店可能把咖啡放在「饮品」分类下，本服务已按类目归位，若仍缺说明该店没有符合口径的咖啡 |

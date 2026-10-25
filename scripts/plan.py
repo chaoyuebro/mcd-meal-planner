@@ -9,8 +9,11 @@
     python scripts/plan.py health
     python scripts/plan.py stores --city 郑州 --keyword 七里河
     python scripts/plan.py menu --store 3560134 --mode lean
-    python scripts/plan.py plan --store 3560134 --mode lean --text "1000千卡以内，预算40"
+    python scripts/plan.py plan --store 3560134 --mode lean --text "两个人，预算40，要一个汉堡"
     python scripts/plan.py plan --store 3560134 --text "..." --cart "520689:1" --skip "A,B;A,C"
+
+口径（V1.20 起）：配餐只按「人数、预算、口味」搭配；热量与营养素不作为筛选条件，
+用户提及时只在提示里说明「未生效」；方案卡片照常展示方案自身的热量与营养素。
 """
 
 from __future__ import annotations
@@ -208,9 +211,14 @@ def cmd_plan(args) -> int:
                 _out(line)
     else:
         blocker = d.get("blocker") or {}
-        _out("\n没有符合全部条件的方案。")
-        if blocker.get("message"):
-            _out(f"原因：{blocker['message']}")
+        # 「换一套」把候选看尽时不是条件无解，别用「没有符合全部条件」误导用户
+        if blocker.get("code") == "exhausted":
+            _out("")
+            _out(blocker.get("message") or "符合条件的搭配都已经看过了")
+        else:
+            _out("\n没有符合全部条件的方案。")
+            if blocker.get("message"):
+                _out(f"原因：{blocker['message']}")
         for s in blocker.get("suggestions") or []:
             _out(f"  · {s}")
 

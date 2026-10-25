@@ -21,16 +21,18 @@
 {
   "storeCode": "3560134",
   "mode": "lean",
-  "text": "不超过1000千卡，预算40元，要一个汉堡一杯咖啡",
+  "text": "两个人，不吃辣，预算60",
   "cart": [{"code": "520689", "quantity": 1}],
   "skip": [["麦香鱼", "鲜萃咖啡"]],
-  "needTableware": true
+  "needTableware": true,
+  "useLLM": true
 }
 ```
 
 - `cart`：购物车已有商品。**只用于排除重复推荐**，其热量与金额不进入方案计算。
 - `skip`：上一套方案的 `signature` 数组，用于「换一套」。
 - `text`：用户原话，不要自己改写成数字。
+- `useLLM`：是否让模型参与解析（默认 `true`）。服务端未配置 `MINIMAX_API_KEY` 时自动回退正则，不需要调用方判断。
 
 响应（仅列 Skill 会用到的字段）：
 
@@ -56,9 +58,21 @@
   "blocker": null,
   "cartKcal": 0,
   "cartPrice": 0,
+  "ai": {"used": true, "model": "MiniMax-M3.1-Flash", "summary": "两个人不吃辣，预算 60 元", "error": null},
   "note": "返回 2 张券，均不适用于当前餐品，已按无券试算"
 }
 ```
+
+`ai` 字段说明：
+
+| 字段 | 含义 |
+|---|---|
+| `used` | 本次是否由模型解析（`false` 表示走了关键词规则） |
+| `model` | 实际使用的模型名 |
+| `summary` | 模型对用户原话的一句话复述，可直接展示给用户核对 |
+| `error` | 未启用/失败原因（如 `未配置 MINIMAX_API_KEY`），正常时为空 |
+
+模型解析出的条件会以 `recognized[].source = "AI 解析"` 出现在列表里，与正则解析出的条件区分开。
 
 ## 口径（转述时必须遵守）
 
@@ -68,6 +82,7 @@
 4. **`hasEstimate: true`** 表示方案内至少一件商品的热量是兜底估算（`kcalSource` 为 `heuristic` / `unknown`），转述时保留「约」并说明哪件是估算。
 5. **减脂模式（`lean`）** 只含汉堡与黑咖啡，汉堡默认去酱（`sauceOff: true`，热量已按去酱后计）。去酱只扣热量，蛋白质/脂肪/碳水不调整。
 6. **无方案时** `plans` 为 `[]`，`blocker.message` 给出基于真实候选与试算价的阻碍原因，`blocker.suggestions` 给出放宽方向。照抄，不要自行推测更低价格。
+7. **AI 解析结果要回显。** 当 `ai.used` 为真时，把 `ai.summary` 和标着 `AI 解析` 的条件一起告诉用户，让他确认有没有理解错；不要额外替模型解释或补充它没说过的条件。
 
 ## 常见错误
 
